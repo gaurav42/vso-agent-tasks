@@ -10,7 +10,7 @@ import-module "Microsoft.TeamFoundation.DistributedTask.Task.Internal"
 import-module "Microsoft.TeamFoundation.DistributedTask.Task.Common"
 
 # try to find gulp in the path
-$gulp = Get-Command -Name gulp -ErrorAction Ignore
+$gulp = Get-Command -Name gulp -ErrorAction SilentlyContinue
 
 if(!$gulp)
 {
