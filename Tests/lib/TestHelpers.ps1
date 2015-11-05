@@ -1,10 +1,11 @@
 [cmdletbinding()]
 param()
 
-Write-Verbose "Loading test functions."
+Write-Verbose "Loading test helpers."
+$PSModuleAutoloadingPreference = 'None'
 [hashtable]$mocks = @{ }
 
-function Assert-Equals {
+function Assert-AreEqual {
     [cmdletbinding()]
     param(
         [Parameter(Mandatory= $true)]
@@ -14,7 +15,7 @@ function Assert-Equals {
         [object]$Actual)
 
     Write-Verbose "Asserting equals. Expected: '$Expected' ; Actual: '$Actual'."
-    if ($Expected -ne $Actual) {
+    if (!($Expected -eq $Actual)) {
         throw "Assert equals failed. Expected: '$Expected' ; Actual: '$Actual'."
     }
 }
@@ -52,13 +53,13 @@ function Assert-WasCalled {
 
     # Check if the command is already registered.
     Write-Verbose "Asserting was-called: $Command"
-    if ($Arguments -ne $null) {
+    if (!([object]::ReferenceEquals($Arguments, $null))) {
         $OFS = " "
-        Write-Verbose "Arguments: $Arguments"
+        Write-Verbose "Expected arguments: $Arguments"
     }
 
     if ($MatchEvaluator) {
-        Write-Verbose "MatchEvaluator: $($MatchEvaluator.ToString().Trim())"
+        Write-Verbose "Match evaluator: $($MatchEvaluator.ToString().Trim())"
     }
 
     $registration = $mocks[$Command]
@@ -66,7 +67,7 @@ function Assert-WasCalled {
         throw "Mock registration not found for command: $Command"
     }
 
-    if (!$MatchEvaluator -and ($Arguments -eq $null)) {
+    if (!$MatchEvaluator -and ([object]::ReferenceEquals($Arguments, $null))) {
         if (!$registration.Invocations.Length) {
             throw "Assert was-called failed. Command was not called: $Command"
         }
@@ -89,25 +90,58 @@ function Assert-WasCalled {
     } else {
         $found = $false
         foreach ($invocation in $registration.Invocations) {
-            if ($Arguments.Length -eq $invocation.Length) {
+            if (Compare-ArgumentArrays $Arguments $invocation) {
                 $found = $true
-                for ($i = 0 ; $i -lt $Arguments.Length ; $i++) {
-                    if ($Arguments[$i] -ne $invocation[$i]) {
-                        $found = $false
-                    }
-                }
-
-                if ($found) {
-                    break
-                }
             }
         }
 
         if (!$found) {
             $OFS = " "
+            foreach ($invocation in $registration.Invocations) {
+                Write-Verbose "Registered invocation: $invocation"
+            }
+
             throw "Assert was-called failed. Command was not called with the specified arguments. Command: $Command ; Arguments: $Arguments"
         }
     }
+}
+
+function Compare-ArgumentArrays {
+    [cmdletbinding()]
+    param(
+        [object[]]$Array1,
+        [object[]]$Array2
+    )
+
+    if ($Array1.Length -ne $Array2.Length) {
+        return $false
+    }
+
+    for ($i = 0 ; $i -lt $Array1.Length ; $i++) {
+        $value1 = $Array1[$i]
+        $value2 = $Array2[$i]
+        if (($value1 -is [string]) -and ($value1 -eq '') -and ([object]::ReferenceEquals($value2, $null))) {
+            # Treat the values as matching.
+        } elseif (($value2 -is [string]) -and ($value2 -eq '') -and ([object]::ReferenceEquals($value1, $null))) {
+            # Treat the values as matching.
+        } elseif ($value1 -eq $value2) {
+            # The values match.
+        } else {
+            return $false
+        }
+    }
+
+    return $true
+}
+
+function Register-Stub {
+    [cmdletbinding()]
+    param(
+        [ValidateNotNullOrEmpty()]
+        [string]$Command
+    )
+
+    Register-WhenCalled -Command $Command
 }
 
 function Register-WhenCalled {
@@ -157,28 +191,17 @@ function Register-WhenCalled {
             foreach ($implementation in $registration.Implementations) {
                 # Attempt to match the implementation.
                 $isMatch = $false
-                if (!$implementation.MatchEvaluator -and ($implementation.Arguments -eq $null)) {
+                if (!$implementation.MatchEvaluator -and ([object]::ReferenceEquals($implementation.Arguments, $null))) {
                     # Match anything if no match evaluator or arguments specified.
                     $isMatch = $true
-                } elseif (& $implementation.MatchEvaluator @args) {
+                } elseif ($implementation.MatchEvaluator -and (& $implementation.MatchEvaluator @args)) {
                     # Match evaluator returned true.
-                    Write-Verbose "Matching implementation found using MatchEvaluator: $($implementation.MatchEvaluator.ToString().Trim())"
+                    Write-Verbose "Matching implementation found using match evaluator: $($implementation.MatchEvaluator.ToString().Trim())"
                     $isMatch = $true
-                } elseif ($Arguments.Length -eq $args.Length) {
-                $host.EnterNestedPrompt()
-                    # Check if all arguments match.
+                } elseif (!([object]::ReferenceEquals($implementation.Arguments, $null)) -and (Compare-ArgumentArrays $implementation.Arguments $args)) {
+                    $OFS = " "
+                    Write-Verbose "Matching implementation found using arguments: $($implementation.Arguments)"
                     $isMatch = $true
-                    for ($i = 0 ; $i -lt $Arguments.Length ; $i++) {
-                        if ($Arguments[$i] -ne $args[$i]) {
-                            $isMatch = $false
-                            break
-                        }
-                    }
-
-                    if ($isMatch) {
-                        $OFS = " "
-                        Write-Verbose "Matching implementation found using Arguments: $Arguments"
-                    }
                 }
 
                 # Validate multiple matches not found.
@@ -204,12 +227,12 @@ function Register-WhenCalled {
 
     # Check if an implementation is specified.
     $implementation = $null
-    if ((!$Func) -and (!$MatchEvaluator) -and (!$Arguments)) {
+    if ((!$Func) -and (!$MatchEvaluator) -and ([object]::ReferenceEquals($Arguments, $null))) {
         Write-Verbose "Registered stub."
     } else {
         # Add the implementation to the registration object.
         Write-Verbose "Registering implementation."
-        if ($Arguments -ne $null) {
+        if (!([object]::ReferenceEquals($Arguments, $null))) {
             $OFS = " "
             Write-Verbose "Arguments: $Arguments"
         }
@@ -232,6 +255,4 @@ function Register-WhenCalled {
 }
 
 # Stub common commands.
-Register-WhenCalled -Command Import-Module
-Register-WhenCalled -Command Invoke-Tool
-Register-WhenCalled -Command Get-Command
+Register-Stub -Command Import-Module

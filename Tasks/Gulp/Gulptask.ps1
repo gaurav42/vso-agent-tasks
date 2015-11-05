@@ -17,6 +17,6 @@ if (!$OmitDotSource) {
 
 $gulp = Get-GulpCommand
 $arguments = Format-ArgumentsParameter -GulpFile $gulpFile -Targets $targets -Arguments $arguments
-$cwd = Get-WorkingDirectoryParameter -GulpFile
+$cwd = Get-WorkingDirectoryParameter -Cwd $cwd
 Write-Verbose "Running Gulp: $($gulp.Path)"
 Invoke-Tool -Path $gulp.Path -Arguments $arguments -WorkingFolder $cwd
