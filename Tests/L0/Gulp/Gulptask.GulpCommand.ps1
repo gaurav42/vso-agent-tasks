@@ -3,7 +3,7 @@ param()
 
 # Arrange.
 . $PSScriptRoot\..\..\lib\TestHelpers.ps1
-Register-WhenCalled -Command 'Get-GulpCommand' -Arguments @( ) -Func { @{ Path = 'Some path to gulp' } }
+Register-Mock -Command 'Get-GulpCommand' -Arguments @( ) -Func { @{ Path = 'Some path to gulp' } }
 Register-Stub -Command 'Format-ArgumentsParameter'
 Register-Stub -Command 'Get-WorkingDirectoryParameter'
 Register-Stub -Command 'Invoke-Tool'

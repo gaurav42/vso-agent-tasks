@@ -6,7 +6,7 @@ param()
 . $PSScriptRoot\..\..\..\Tasks\Gulp\Helpers.ps1
 $distributedTaskContext = 'Some distributed task context'
 Register-Stub -Command 'Get-Command'
-Register-WhenCalled -Command 'Get-TaskVariable' -Arguments @(
+Register-Mock -Command 'Get-TaskVariable' -Arguments @(
         '-Context',
         $distributedTaskContext
         '-Name'
@@ -15,13 +15,13 @@ Register-WhenCalled -Command 'Get-TaskVariable' -Arguments @(
         'c:\some build sources directory'
     }
 Register-Stub -Command 'Test-Path'
-Register-WhenCalled -Command 'Find-Files' -Arguments @(
+Register-Mock -Command 'Find-Files' -Arguments @(
         '-SearchPattern'
         'c:\some build sources directory\**\gulp.cmd'
     ) -Func {
         'c:\some build sources directory\nested directory\gulp.cmd'
     }
-Register-WhenCalled -Command 'Get-Command' -Arguments @(
+Register-Mock -Command 'Get-Command' -Arguments @(
         '-Name'
         'c:\some build sources directory\nested directory\gulp.cmd'
     ) -Func {

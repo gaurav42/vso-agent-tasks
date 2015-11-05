@@ -10,7 +10,7 @@ Register-Stub -Command 'Get-TaskVariable'
 Register-Stub -Command 'Join-Path'
 Register-Stub -Command 'Test-Path'
 Register-Stub -Command 'Find-Files'
-Register-WhenCalled -Command 'Get-Command' -Arguments @(
+Register-Mock -Command 'Get-Command' -Arguments @(
         '-Name'
         'gulp'
         '-ErrorAction'

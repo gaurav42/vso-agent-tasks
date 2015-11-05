@@ -5,7 +5,7 @@ param()
 . $PSScriptRoot\..\..\lib\TestHelpers.ps1
 Register-Stub -Command 'Get-GulpCommand'
 Register-Stub -Command 'Format-ArgumentsParameter'
-Register-WhenCalled -Command 'Get-WorkingDirectoryParameter' -Arguments @(
+Register-Mock -Command 'Get-WorkingDirectoryParameter' -Arguments @(
         '-Cwd'
         'Some working directory'
     ) -Func {

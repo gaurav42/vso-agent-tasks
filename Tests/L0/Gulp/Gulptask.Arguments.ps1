@@ -4,7 +4,7 @@ param()
 # Arrange.
 . $PSScriptRoot\..\..\lib\TestHelpers.ps1
 Register-Stub -Command 'Get-GulpCommand'
-Register-WhenCalled -Command 'Format-ArgumentsParameter' -Arguments @(
+Register-Mock -Command 'Format-ArgumentsParameter' -Arguments @(
         '-GulpFile'
         'Some gulp file'
         '-Targets'

@@ -152,10 +152,10 @@ function Register-Stub {
         [string]$Command
     )
 
-    Register-WhenCalled -Command $Command
+    Register-Mock -Command $Command
 }
 
-function Register-WhenCalled {
+function Register-Mock {
     [cmdletbinding()]
     param(
         [ValidateNotNullOrEmpty()]

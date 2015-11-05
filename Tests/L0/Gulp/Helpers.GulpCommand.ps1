@@ -4,7 +4,7 @@ param()
 # Arrange.
 . $PSScriptRoot\..\..\lib\TestHelpers.ps1
 . $PSScriptRoot\..\..\..\Tasks\Gulp\Helpers.ps1
-Register-WhenCalled -Command 'Get-Command' -Arguments @(
+Register-Mock -Command 'Get-Command' -Arguments @(
         '-Name'
         'gulp'
         '-ErrorAction'
