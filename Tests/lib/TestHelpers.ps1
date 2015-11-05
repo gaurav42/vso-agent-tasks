@@ -8,15 +8,26 @@ $PSModuleAutoloadingPreference = 'None'
 function Assert-AreEqual {
     [cmdletbinding()]
     param(
-        [Parameter(Mandatory= $true)]
         [object]$Expected,
+        [object]$Actual,
+        [string]$Message)
 
-        [Parameter(Mandatory= $true)]
-        [object]$Actual)
+    Write-Verbose "Asserting are equal. Expected: '$Expected' ; Actual: '$Actual'."
+    if ($Expected -ne $Actual) {
+        throw ("Assert are equal failed. Expected: '$Expected' ; Actual: '$Actual'. $Message".Trim())
+    }
+}
 
-    Write-Verbose "Asserting equals. Expected: '$Expected' ; Actual: '$Actual'."
-    if (!($Expected -eq $Actual)) {
-        throw "Assert equals failed. Expected: '$Expected' ; Actual: '$Actual'."
+function Assert-AreNotEqual {
+    [cmdletbinding()]
+    param(
+        [object]$NotExpected,
+        [object]$Actual,
+        [string]$Message)
+
+    Write-Verbose "Asserting are not equal. Expected: '$NotExpected' ; Actual: '$Actual'."
+    if ($NotExpected -eq $Actual) {
+        throw ("Assert are not equal failed. Not expected: '$NotExpected' ; Actual: '$Actual'. $Message".Trim())
     }
 }
 

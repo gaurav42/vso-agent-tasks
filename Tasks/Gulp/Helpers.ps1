@@ -18,38 +18,32 @@ function Get-GulpCommand {
     [cmdletbinding()]
     param()
 
-    # try to find gulp in the path
+    # Try to find gulp in the path.
     $gulp = Get-Command -Name gulp -ErrorAction SilentlyContinue
     if ($gulp) {
-        $gulp
-        return
+        return $gulp
     }
 
+    # Try to find gulp in the node modules bin directory.
     Write-Verbose "try to find gulp in the node_modules in the sources directory"
     $buildSourcesDirectory = Get-TaskVariable -Context $distributedTaskContext -Name "Build.SourcesDirectory"
-    $nodeBinPath = Join-Path -Path $buildSourcesDirectory -ChildPath 'node_modules\.bin'
-
-    if(Test-Path -Path $nodeBinPath -PathType Container)
-    {
-        $gulpPath = Join-Path -Path $nodeBinPath -ChildPath "gulp.cmd"
-        Write-Verbose "Looking for gulp.cmd in $gulpPath"
-        $gulp = Get-Command -Name $gulpPath -ErrorAction SilentlyContinue
-        if ($gulp) {
-            $gulp
-            return
-        }
+    $nodeBinGulpPath = Join-Path -Path $buildSourcesDirectory -ChildPath 'node_modules\.bin\gulp.cmd'
+    Write-Verbose "Looking for gulp.cmd at: $nodeBinGulpPath"
+    if (Test-Path -LiteralPath $nodeBinGulpPath -PathType Leaf) {
+        return (Get-Command -Name $nodeBinGulpPath)
     }
 
+    # Try to find gulp in the build sources directory.
     Write-Verbose "Recursively searching for gulp.cmd in $buildSourcesDirectory"
     $searchPattern = Join-Path -Path $buildSourcesDirectory -ChildPath '**\gulp.cmd'
     $foundFiles = Find-Files -SearchPattern $searchPattern
-    foreach($file in $foundFiles)
-    {
-        $gulpPath = $file;
-        Get-Command -Name $gulpPath
-        return
+    if ($foundFiles) {
+        foreach ($file in $foundFiles) {
+            return (Get-Command -Name $file)
+        }
     }
 
+    # Throw if can't find gulp anywhere.
     try {
         Get-Command -Name gulp -ErrorAction Stop
     } catch {
