@@ -145,16 +145,6 @@ function Compare-ArgumentArrays {
     return $true
 }
 
-function Register-Stub {
-    [cmdletbinding()]
-    param(
-        [ValidateNotNullOrEmpty()]
-        [string]$Command
-    )
-
-    Register-Mock -Command $Command
-}
-
 function Register-Mock {
     [cmdletbinding()]
     param(
@@ -263,6 +253,16 @@ function Register-Mock {
         }
         $registration.Implementations += $implementation
     }
+}
+
+function Register-Stub {
+    [cmdletbinding()]
+    param(
+        [ValidateNotNullOrEmpty()]
+        [string]$Command
+    )
+
+    Register-Mock -Command $Command
 }
 
 # Stub common commands.
